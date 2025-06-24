@@ -4,11 +4,18 @@ import traceback
 import os
 from datetime import datetime
 
+
+import logging
+from logging.handlers import RotatingFileHandler
+
 # Import the enhanced compiler
 from compiler import MiniLangCompiler
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'enhanced-minilang-compiler-secret-key-2024'
+app.config['SECRET_KEY'] = 'minilang-compiler-secret-key-2024'
+app.config['FLASK_ENV'] = 'production'
+app.config['PORT'] = 8080
+app.config['HOST'] = '0.0.0.0'
 
 # Global statistics for monitoring
 compilation_stats = {
@@ -17,6 +24,8 @@ compilation_stats = {
     'optimization_runs': 0,
     'assembly_generations': 0
 }
+
+
 
 @app.route('/')
 def index():
@@ -1105,30 +1114,83 @@ def after_request(response):
     return response
 
 if __name__ == '__main__':
-    # debug_mode = os.environ.get('FLASK_ENV') != 'production'
-    port = int(os.environ.get('PORT', 5000))
+    # Environment Configuration
+    environment = os.environ.get('FLASK_ENV', 'production')
+    debug_mode = environment == 'development'
+    port = int(os.environ.get('PORT', 8080))  # Changed default for production
     host = os.environ.get('HOST', '0.0.0.0')
     
-    print("=" * 60)
-    print("ENHANCED MINILANG++ COMPILER WEB INTERFACE")
-    print("=" * 60)
-    print("Features:")
-    print("  ✓ Complete array support")
-    print("  ✓ Full optimization pipeline")
-    print("  ✓ Code quality analysis")
-    print("  ✓ Performance estimation")
-    print("  ✓ Enhanced error reporting")
-    print("=" * 60)
-    print(f"Server URL: http://{host}:{port}")
-    print("API Endpoints:")
-    print(f"  POST /compile         - Full compilation pipeline")
-    print(f"  POST /api/analyze     - Comprehensive code analysis") 
-    print(f"  POST /api/optimize    - Optimization analysis")
-    print(f"  POST /api/assembly    - Assembly generation")
-    print(f"  POST /api/validate    - Syntax validation")
-    print(f"  POST /api/format      - Code formatting")
-    print(f"  GET  /examples        - Example programs")
-    print(f"  GET  /api/stats       - Compilation statistics")
-    print("=" * 60)
+    # Production Settings
+    if not debug_mode:
+        # Configure Production Logging
+        if not os.path.exists('logs'):
+            os.mkdir('logs')
+        
+        file_handler = RotatingFileHandler(
+            'logs/minilang_compiler.log', 
+            maxBytes=10240000, 
+            backupCount=10
+        )
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        ))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
+        app.logger.setLevel(logging.INFO)
+        app.logger.info('MiniLang++ Compiler startup')
+        
+        # Production Security Headers (already in after_request)
+        app.config.update(
+            SECRET_KEY=os.environ.get('SECRET_KEY', 'prod-minilang-compiler-key-change-me'),
+            SESSION_COOKIE_SECURE=True,
+            SESSION_COOKIE_HTTPONLY=True,
+            SESSION_COOKIE_SAMESITE='Lax',
+        )
+        
+        print("🚀 MINILANG++ COMPILER - PRODUCTION MODE")
+        print("=" * 50)
+        print(f"✓ Environment: {environment}")
+        print(f"✓ Debug Mode: {'ON' if debug_mode else 'OFF'}")
+        print(f"✓ Logging: Enabled (logs/minilang_compiler.log)")
+        print(f"✓ Security Headers: Enabled")
+        print(f"✓ Server: {host}:{port}")
+        print("=" * 50)
+        print("API Endpoints:")
+        print("  POST /compile     - Full compilation")
+        print("  POST /api/*       - Various analysis endpoints")
+        print("  GET  /examples    - Example programs")
+        print("  GET  /health      - Health check")
+        print("=" * 50)
+    else:
+        # Development Mode
+        print("🔧 MINILANG++ COMPILER - DEVELOPMENT MODE")
+        print("=" * 60)
+        print("Features:")
+        print("  ✓ Complete array support")
+        print("  ✓ Full optimization pipeline")
+        print("  ✓ Code quality analysis")
+        print("  ✓ Performance estimation")
+        print("  ✓ Enhanced error reporting")
+        print("=" * 60)
+        print(f"Server URL: http://{host}:{port}")
+        print("API Endpoints:")
+        print(f"  POST /compile         - Full compilation pipeline")
+        print(f"  POST /api/analyze     - Comprehensive code analysis")
+        print(f"  POST /api/optimize    - Optimization analysis")
+        print(f"  POST /api/assembly    - Assembly generation")
+        print(f"  POST /api/validate    - Syntax validation")
+        print(f"  POST /api/format      - Code formatting")
+        print(f"  GET  /examples        - Example programs")
+        print(f"  GET  /api/stats       - Compilation statistics")
+        print("=" * 60)
     
-    app.run(host=host, port=port)
+    # Run the application
+    if debug_mode:
+        # Development server
+        app.run(debug=True, host=host, port=port)
+    else:
+        # Production - use WSGI server (gunicorn, waitress, etc.)
+        print("⚠️  For production, use a WSGI server like Gunicorn:")
+        print(f"   gunicorn -w 4 -b {host}:{port} app:app")
+        print("   Or use the built-in server (not recommended for production):")
+        app.run(debug=False, host=host, port=port, threaded=True)
