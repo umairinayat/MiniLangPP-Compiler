@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniLang++ Compiler</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            /* overflow: hidden; */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            /* allow vertical scrolling */
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            min-height: 0;
+            min-width: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        .editor-section {
+            background: #f8f9fa;
+            border-right: 2px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 350px;
+            max-width: 600px;
+            width: 35%;
+        }
+
+        .results-section {
+            background: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1 1 0;
+            min-width: 0;
+            min-height: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        .section-header {
+            background: #343a40;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .editor-container {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .btn-example {
+            background: #28a745;
+            color: white;
+            font-size: 12px;
+            padding: 8px 15px;
+        }
+
+        .btn-example:hover {
+            background: #218838;
+        }
+
+        #code-editor {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            resize: none;
+            outline: none;
+            background: white;
+            line-height: 1.5;
+            min-height: 0;
+        }
+
+        #code-editor:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .results-container {
+            padding: 0;
+            flex: 1 1 0;
+            min-height: 0;
+            min-width: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c757d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .tab:hover:not(.active) {
+            color: #495057;
+            background: rgba(0,0,0,0.05);
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1 1 0;
+            min-height: 0;
+            min-width: 0;
+            height: 100%;
+            width: 100%;
+            overflow: auto;
+            padding: 0 0 0 0;
+            align-items: stretch;
+            justify-content: stretch;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            align-items: stretch;
+            justify-content: stretch;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-processing {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #b8daff;
+        }
+
+        .error-list {
+            background: #f8f9fa;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .error-item {
+            background: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #dc3545;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin: 10px 0;
+            flex: 1;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+            color: #495057;
+        }
+
+        .data-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #dee2e6;
+            font-family: monospace;
+        }
+
+        .data-table tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .ast-tree {
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            flex: 1;
+        }
+
+        .ast-node {
+            margin: 2px 0;
+        }
+
+        .ast-node-type {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .ast-node-property {
+            color: #28a745;
+        }
+
+        .ast-node-value {
+            color: #dc3545;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: #6c757d;
+            flex: 1;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .empty-state i {
+            font-size: 3em;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .code-highlight {
+            background: #f8f9fa;
+            padding: 0;
+            border-radius: 0;
+            border-left: none;
+            font-family: monospace;
+            font-size: 15px;
+            line-height: 1.5;
+            overflow: auto;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: stretch;
+        }
+
+        .code-highlight pre, .code-highlight code {
+            background: none;
+            margin: 0;
+            padding: 20px;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            min-width: 0;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+            display: block;
+            overflow: auto;
+        }
+
+        .scope-section {
+            margin: 15px 0;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .scope-header {
+            background: #e9ecef;
+            padding: 10px 15px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .scope-content {
+            padding: 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .example-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            line-height: 1;
+            color: #fff;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 4px;
+        }
+
+        .badge-primary {
+            background-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            .editor-section {
+                border-right: none;
+                border-bottom: 2px solid #e9ecef;
+                max-width: 100%;
+                width: 100%;
+            }
+            .results-section {
+                max-width: 100%;
+                width: 100%;
+            }
+            .header h1 {
+                font-size: 2em;
+            }
+            .toolbar {
+                justify-content: center;
+            }
+            .tabs {
+                justify-content: center;
+            }
+        }
+
+        .highlight {
+            background: rgba(255, 193, 7, 0.3);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .code-line {
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .line-number {
+            position: absolute;
+            left: 10px;
+            color: #6c757d;
+            font-size: 12px;
+            width: 25px;
+            text-align: right;
+        }
+
+        .tac-instruction {
+            display: grid;
+            grid-template-columns: 40px 120px 80px 80px 80px;
+            gap: 10px;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #e9ecef;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .tac-instruction:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .tac-header {
+            display: grid;
+            grid-template-columns: 40px 120px 80px 80px 80px;
+            gap: 10px;
+            padding: 10px 8px;
+            background: #e9ecef;
+            font-weight: 600;
+            font-size: 12px;
+            border-bottom: 2px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-code"></i> MiniLang++ Compiler</h1>
+            <p>A complete compiler frontend with lexical analysis, parsing, semantic analysis, and code generation</p>
+        </div>
+
+        <div class="main-content">
+            <div class="editor-section">
+                <div class="section-header">
+                    <i class="fas fa-edit"></i>
+                    Source Code Editor
+                </div>
+                <div class="editor-container">
+                    <div class="toolbar">
+                        <button class="btn btn-primary" onclick="compileCode()">
+                            <i class="fas fa-play"></i>
+                            Compile
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearEditor()">
+                            <i class="fas fa-trash"></i>
+                            Clear
+                        </button>
+                        <label style="margin-left: 15px; display: flex; align-items: center; gap: 5px; font-size: 13px;">
+                            <input type="checkbox" id="optimize-checkbox" checked style="margin-right: 5px;"> Enable Optimization
+                        </label>
+                        <label style="margin-left: 15px; display: flex; align-items: center; gap: 5px; font-size: 13px;">
+                            Target:
+                            <select id="target-arch-select" style="margin-left: 5px; padding: 3px 8px; border-radius: 5px; border: 1px solid #ccc;">
+                                <option value="x86_64">x86_64</option>
+                                <option value="arm64">arm64</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-secondary" onclick="downloadCode()" title="Download Source Code" style="margin-left: auto;">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                        <button class="btn btn-secondary" onclick="copyCode()" title="Copy Source Code">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    
+                    <div class="example-buttons" id="example-buttons"></div>
+
+                    <textarea id="code-editor" placeholder="Enter your MiniLang++ code here...">int max(int a, int b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+int main() {
+    int x = 10;
+    int y = 20;
+    int z = max(x, y);
+    return 0;
+}</textarea>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <div class="section-header">
+                    <i class="fas fa-chart-line"></i>
+                    Compilation Results
+                </div>
+                <div class="results-container">
+                    <div id="status-indicator" class="status-indicator" style="display: none;">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="status-text">Ready to compile</span>
+                    </div>
+
+                    <div class="tabs">
+                        <button class="tab active" onclick="showTab('tokens', event)">
+                            <i class="fas fa-tags"></i> Tokens
+                        </button>
+                        <button class="tab" onclick="showTab('ast', event)">
+                            <i class="fas fa-sitemap"></i> AST
+                        </button>
+                        <button class="tab" onclick="showTab('symbols', event)">
+                            <i class="fas fa-table"></i> Symbols
+                        </button>
+                        <button class="tab" onclick="showTab('intermediate', event)">
+                            <i class="fas fa-code"></i> TAC
+                        </button>
+                        <button class="tab" onclick="showTab('assembly', event)">
+                            <i class="fas fa-microchip"></i> Assembly
+                        </button>
+                        <button class="tab" onclick="showTab('optimizations', event)">
+                            <i class="fas fa-magic"></i> Optimizations
+                        </button>
+                        <button class="tab" onclick="showTab('errors', event)">
+                            <i class="fas fa-exclamation-triangle"></i> Errors
+                        </button>
+                    </div>
+
+                    <div id="tokens-content" class="tab-content active">
+                        <div class="empty-state">
+                            <i class="fas fa-tags"></i>
+                            <h3>No tokens generated yet</h3>
+                            <p>Compile your code to see the lexical analysis results</p>
+                        </div>
+                    </div>
+
+                    <div id="ast-content" class="tab-content">
+                        <div class="empty-state">
+                            <i class="fas fa-sitemap"></i>
+                            <h3>No AST generated yet</h3>
+                            <p>Compile your code to see the abstract syntax tree</p>
+                        </div>
+                    </div>
+
+                    <div id="symbols-content" class="tab-content">
+                        <div class="empty-state">
+                            <i class="fas fa-table"></i>
+                            <h3>No symbol table generated yet</h3>
+                            <p>Compile your code to see the symbol table analysis</p>
+                        </div>
+                    </div>
+
+                    <div id="intermediate-content" class="tab-content">
+                        <div class="empty-state">
+                            <i class="fas fa-code"></i>
+                            <h3>No intermediate code generated yet</h3>
+                            <p>Compile your code to see the three-address code</p>
+                        </div>
+                    </div>
+
+                    <div id="assembly-content" class="tab-content">
+                        <div class="empty-state">
+                            <i class="fas fa-microchip"></i>
+                            <h3>No assembly code generated yet</h3>
+                            <p>Compile your code to see the generated assembly</p>
+                        </div>
+                    </div>
+
+                    <div id="optimizations-content" class="tab-content">
+                        <div class="empty-state">
+                            <i class="fas fa-magic"></i>
+                            <h3>No optimizations applied yet</h3>
+                            <p>Compile your code to see optimization analysis</p>
+                        </div>
+                    </div>
+
+                    <div id="errors-content" class="tab-content">
+                        <div class="empty-state">
+                            <i class="fas fa-check-circle"></i>
+                            <h3>No errors to display</h3>
+                            <p>Any compilation errors will appear here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-c.min.js"></script>
+
+    <script>
+        let currentCompilationResults = null;
+        let examples = {};
+
+        // Load examples on page load and create buttons dynamically
+        fetch('/examples')
+            .then(response => response.json())
+            .then(data => {
+                examples = data;
+                const exampleButtonsDiv = document.getElementById('example-buttons');
+                exampleButtonsDiv.innerHTML = '';
+                Object.keys(examples).forEach(key => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-example';
+                    btn.textContent = examples[key].name || key;
+                    btn.title = examples[key].description || '';
+                    btn.onclick = () => loadExample(key);
+                    exampleButtonsDiv.appendChild(btn);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading examples:', error);
+            });
+
+        function showTab(tabName, event) {
+            // Remove active class from all tabs and contents
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Add active class to selected tab and content
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // Fallback: find the tab button by tab name
+                const tabButtons = document.querySelectorAll('.tab');
+                tabButtons.forEach(button => {
+                    if (button.textContent.toLowerCase().includes(tabName.toLowerCase()) || 
+                        button.innerHTML.includes(tabName)) {
+                        button.classList.add('active');
+                    }
+                });
+            }
+            document.getElementById(tabName + '-content').classList.add('active');
+        }
+
+        function loadExample(exampleType) {
+            if (examples[exampleType]) {
+                document.getElementById('code-editor').value = examples[exampleType].code;
+            }
+        }
+
+        function clearEditor() {
+            document.getElementById('code-editor').value = '';
+            clearResults();
+        }
+
+        function clearResults() {
+            // Clear all tab contents
+            const tabs = ['tokens', 'ast', 'symbols', 'intermediate', 'assembly', 'optimizations', 'errors'];
+            tabs.forEach(tab => {
+                const content = document.getElementById(tab + '-content');
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-${getTabIcon(tab)}"></i>
+                        <h3>No ${tab} generated yet</h3>
+                        <p>Compile your code to see the ${getTabDescription(tab)}</p>
+                    </div>
+                `;
+            });
+
+            // Hide status indicator
+            document.getElementById('status-indicator').style.display = 'none';
+        }
+
+        function getTabIcon(tab) {
+            const icons = {
+                'tokens': 'tags',
+                'ast': 'sitemap',
+                'symbols': 'table',
+                'intermediate': 'code',
+                'assembly': 'microchip',
+                'optimizations': 'magic',
+                'errors': 'check-circle'
+            };
+            return icons[tab] || 'info-circle';
+        }
+
+        function getTabDescription(tab) {
+            const descriptions = {
+                'tokens': 'lexical analysis results',
+                'ast': 'abstract syntax tree',
+                'symbols': 'symbol table analysis',
+                'intermediate': 'three-address code',
+                'assembly': 'generated assembly',
+                'optimizations': 'optimization analysis',
+                'errors': 'compilation errors'
+            };
+            return descriptions[tab] || 'results';
+        }
+
+        function showLoading() {
+            document.getElementById('status-indicator').style.display = 'flex';
+            document.getElementById('status-indicator').className = 'status-indicator status-processing';
+            document.getElementById('status-text').innerHTML = '<div class="spinner"></div>Compiling...';
+        }
+
+        function hideLoading() {
+            // Status will be updated by showStatus function
+        }
+
+        function showStatus(success, message) {
+            const indicator = document.getElementById('status-indicator');
+            const text = document.getElementById('status-text');
+            
+            indicator.style.display = 'flex';
+            indicator.className = `status-indicator ${success ? 'status-success' : 'status-error'}`;
+            text.innerHTML = `<i class="fas fa-${success ? 'check' : 'times'}-circle"></i>${message}`;
+        }
+
+        async function compileCode() {
+            const code = document.getElementById('code-editor').value;
+            const optimize = document.getElementById('optimize-checkbox').checked;
+            const targetArch = document.getElementById('target-arch-select').value;
+            
+            if (!code.trim()) {
+                showStatus(false, 'Please enter some code to compile');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch('/compile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ code: code, optimize: optimize, target_arch: targetArch })
+                });
+
+                const results = await response.json();
+                currentCompilationResults = results;
+
+                hideLoading();
+
+                if (results.success) {
+                    showStatus(true, 'Compilation successful!');
+                    displayResults(results);
+                } else {
+                    showStatus(false, 'Compilation failed with errors');
+                    displayErrors(results.errors);
+                }
+
+            } catch (error) {
+                hideLoading();
+                showStatus(false, 'Network error: ' + error.message);
+                console.error('Compilation error:', error);
+            }
+        }
+
+        function displayResults(results) {
+            displayTokens(results.tokens);
+            displayAST(results.ast);
+            displaySymbolTable(results.symbol_table);
+            displayIntermediateCode(results.intermediate_code);
+            displayAssembly(results.assembly_code, results.assembly_analysis);
+            displayOptimizations(results.optimizations_applied, results.assembly_analysis, results.statistics);
+            
+            // Clear errors tab if compilation was successful
+            if (results.success) {
+                document.getElementById('errors-content').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                        <h3>No errors found!</h3>
+                        <p>Your code compiled successfully without any errors</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayTokens(tokens) {
+            const content = document.getElementById('tokens-content');
+            
+            if (!tokens || tokens.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-tags"></i>
+                        <h3>No tokens generated</h3>
+                        <p>The lexical analyzer didn't produce any tokens</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Type</th>
+                                <th>Value</th>
+                                <th>Line</th>
+                                <th>Column</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            tokens.forEach((token, index) => {
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><span class="badge badge-primary">${token.type}</span></td>
+                        <td><code>${escapeHtml(token.value)}</code></td>
+                        <td>${token.line}</td>
+                        <td>${token.column}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+                <p style="margin-top: 15px; color: #6c757d; font-size: 14px;">
+                    <i class="fas fa-info-circle"></i>
+                    Generated ${tokens.length} tokens during lexical analysis
+                </p>
+            `;
+
+            content.innerHTML = html;
+        }
+
+        function displayAST(ast) {
+            const content = document.getElementById('ast-content');
+            
+            if (!ast) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-sitemap"></i>
+                        <h3>No AST generated</h3>
+                        <p>The parser couldn't generate an abstract syntax tree</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const astHtml = renderASTNode(ast, 0);
+            content.innerHTML = `
+                <div class="ast-tree">
+                    ${astHtml}
+                </div>
+                <p style="margin-top: 15px; color: #6c757d; font-size: 14px;">
+                    <i class="fas fa-info-circle"></i>
+                    Abstract Syntax Tree showing the structure of your program
+                </p>
+            `;
+        }
+
+        function renderASTNode(node, depth) {
+            if (!node) return '<span style="color: #6c757d;">null</span>';
+            
+            const indent = '  '.repeat(depth);
+            let html = '';
+            
+            if (typeof node === 'object' && node.type) {
+                html += `<div class="ast-node">${indent}<span class="ast-node-type">${node.type}</span>`;
+                
+                Object.keys(node).forEach(key => {
+                    if (key !== 'type') {
+                        html += `<br>${indent}  <span class="ast-node-property">${key}</span>: `;
+                        
+                        if (Array.isArray(node[key])) {
+                            html += '[';
+                            if (node[key].length > 0) {
+                                html += '<br>';
+                                node[key].forEach((item, index) => {
+                                    html += renderASTNode(item, depth + 2);
+                                    if (index < node[key].length - 1) html += ',<br>';
+                                });
+                                html += `<br>${indent}  `;
+                            }
+                            html += ']';
+                        } else if (typeof node[key] === 'object' && node[key] !== null) {
+                            html += '<br>' + renderASTNode(node[key], depth + 2);
+                        } else {
+                            html += `<span class="ast-node-value">${JSON.stringify(node[key])}</span>`;
+                        }
+                    }
+                });
+                
+                html += '</div>';
+            } else {
+                html += `${indent}<span class="ast-node-value">${JSON.stringify(node)}</span>`;
+            }
+            
+            return html;
+        }
+
+        function displaySymbolTable(symbolTable) {
+            const content = document.getElementById('symbols-content');
+            
+            if (!symbolTable || Object.keys(symbolTable).length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-table"></i>
+                        <h3>No symbol table generated</h3>
+                        <p>The semantic analyzer didn't generate a symbol table</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            let totalSymbols = 0;
+            let shownScopes = 0;
+
+            Object.keys(symbolTable).forEach(scopeName => {
+                const scope = symbolTable[scopeName];
+                const symbols = Object.values(scope.symbols);
+                if (symbols.length === 0) return; // Skip empty scopes
+                totalSymbols += symbols.length;
+                shownScopes++;
+
+                html += `
+                    <div class="scope-section">
+                        <div class="scope-header">
+                            <i class="fas fa-layer-group"></i>
+                            ${scopeName.replace('_', ' ').toUpperCase()} (${symbols.length} symbols)
+                        </div>
+                        <div class="scope-content">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Kind</th>
+                                        <th>Scope Level</th>
+                                        <th>Initialized</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+
+                symbols.forEach(symbol => {
+                    const initStatus = symbol.initialized ? 
+                        '<span style="color: #28a745;"><i class="fas fa-check"></i> Yes</span>' : 
+                        '<span style="color: #dc3545;"><i class="fas fa-times"></i> No</span>';
+
+                    html += `
+                        <tr>
+                            <td><code>${symbol.name}</code></td>
+                            <td><span class="highlight">${symbol.type}</span></td>
+                            <td>${symbol.kind}</td>
+                            <td>${symbol.scope_level}</td>
+                            <td>${initStatus}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (shownScopes === 0) {
+                html = `
+                    <div class="empty-state">
+                        <i class="fas fa-table"></i>
+                        <h3>No symbol table generated</h3>
+                        <p>The semantic analyzer didn't generate a symbol table</p>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <p style="margin-top: 15px; color: #6c757d; font-size: 14px;">
+                        <i class="fas fa-info-circle"></i>
+                        Total symbols: ${totalSymbols} across ${shownScopes} scopes
+                    </p>
+                `;
+            }
+
+            content.innerHTML = html;
+        }
+
+        function displayIntermediateCode(intermediateCode) {
+            const content = document.getElementById('intermediate-content');
+            
+            if (!intermediateCode || intermediateCode.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-code"></i>
+                        <h3>No intermediate code generated</h3>
+                        <p>The code generator didn't produce any three-address code</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="table-container">
+                    <div class="tac-header">
+                        <div><strong>#</strong></div>
+                        <div><strong>Operation</strong></div>
+                        <div><strong>Arg1</strong></div>
+                        <div><strong>Arg2</strong></div>
+                        <div><strong>Result</strong></div>
+                    </div>
+            `;
+
+            intermediateCode.forEach((instruction, index) => {
+                html += `
+                    <div class="tac-instruction">
+                        <div>${index + 1}</div>
+                        <div><span class="highlight">${instruction.operation}</span></div>
+                        <div><code>${instruction.arg1 || ''}</code></div>
+                        <div><code>${instruction.arg2 || ''}</code></div>
+                        <div><code>${instruction.result || ''}</code></div>
+                    </div>
+                `;
+            });
+
+            html += `
+                </div>
+                <p style="margin-top: 15px; color: #6c757d; font-size: 14px;">
+                    <i class="fas fa-info-circle"></i>
+                    Generated ${intermediateCode.length} three-address code instructions
+                </p>
+            `;
+
+            content.innerHTML = html;
+        }
+
+        function displayAssembly(assembly, analysis) {
+            const content = document.getElementById('assembly-content');
+            if (!assembly) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-microchip"></i>
+                        <h3>No assembly code generated</h3>
+                        <p>The backend did not produce any assembly code</p>
+                    </div>
+                `;
+                return;
+            }
+            let html = `<div class="code-highlight" style="max-height: 400px; overflow-y: auto;"><pre><code>${escapeHtml(assembly)}</code></pre></div>`;
+            if (analysis) {
+                html += `<div style="margin-top: 10px; color: #6c757d; font-size: 14px;">
+                    <i class="fas fa-info-circle"></i> <b>Assembly Analysis:</b><br>
+                    Total lines: ${analysis.total_lines || '-'}<br>
+                    Data section lines: ${analysis.data_section_lines || '-'}<br>
+                    Text section lines: ${analysis.text_section_lines || '-'}<br>
+                    Instruction count: ${analysis.instruction_count || '-'}<br>
+                    Target architecture: ${analysis.target_architecture || '-'}
+                </div>`;
+            }
+            content.innerHTML = html;
+        }
+
+        function displayOptimizations(optimizations, analysis, stats) {
+            const content = document.getElementById('optimizations-content');
+            if (!optimizations || optimizations.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-magic"></i>
+                        <h3>No optimizations applied</h3>
+                        <p>No optimizations were performed or detected</p>
+                    </div>
+                `;
+                return;
+            }
+            let html = `<div class="table-container"><table class="data-table"><thead><tr><th>#</th><th>Description</th></tr></thead><tbody>`;
+            optimizations.forEach((opt, i) => {
+                html += `<tr><td>${i + 1}</td><td>${escapeHtml(opt)}</td></tr>`;
+            });
+            html += `</tbody></table></div>`;
+            if (stats) {
+                html += `<div style="margin-top: 10px; color: #6c757d; font-size: 14px;">
+                    <i class="fas fa-info-circle"></i> <b>Optimization Stats:</b><br>
+                    Optimizations applied: ${stats.optimizations_count || '-'}<br>
+                    Intermediate instructions: ${stats.intermediate_code ? stats.intermediate_code.length : '-'}<br>
+                    Optimized instructions: ${stats.optimized_code ? stats.optimized_code.length : '-'}
+                </div>`;
+            }
+            content.innerHTML = html;
+        }
+
+        function displayErrors(errors) {
+            const content = document.getElementById('errors-content');
+            
+            const errorTypes = ['lexical', 'syntax', 'semantic', 'general'];
+            let hasErrors = false;
+            let html = '';
+
+            errorTypes.forEach(type => {
+                if (errors[type] && errors[type].length > 0) {
+                    hasErrors = true;
+                    html += `
+                        <div class="error-list">
+                            <h4 style="margin-bottom: 10px; color: #721c24;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                ${type.charAt(0).toUpperCase() + type.slice(1)} Errors (${errors[type].length})
+                            </h4>
+                    `;
+
+                    errors[type].forEach((error, index) => {
+                        html += `
+                            <div class="error-item">
+                                <strong>Error ${index + 1}:</strong> ${escapeHtml(error)}
+                            </div>
+                        `;
+                    });
+
+                    html += '</div>';
+                }
+            });
+
+            if (!hasErrors) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                        <h3>No errors found!</h3>
+                        <p>Your code compiled successfully without any errors</p>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = html;
+                // Automatically switch to errors tab if there are errors
+                showTab('errors', null);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Auto-compile on Ctrl+Enter
+        document.getElementById('code-editor').addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                compileCode();
+            }
+        });
+
+        // Add line numbers to code editor (optional enhancement)
+        document.getElementById('code-editor').addEventListener('input', function() {
+            // Could add line numbering here if desired
+        });
+
+        function downloadCode() {
+            const code = document.getElementById('code-editor').value;
+            const blob = new Blob([code], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'minilang_code.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function copyCode() {
+            const code = document.getElementById('code-editor').value;
+            navigator.clipboard.writeText(code).then(() => {
+                showStatus(true, 'Code copied to clipboard!');
+            }, () => {
+                showStatus(false, 'Failed to copy code.');
+            });
+        }
+    </script>
+</body>
+</html>
