@@ -1105,7 +1105,7 @@ def after_request(response):
     return response
 
 if __name__ == '__main__':
-    debug_mode = os.environ.get('FLASK_ENV') != 'production'
+    # debug_mode = os.environ.get('FLASK_ENV') != 'production'
     port = int(os.environ.get('PORT', 5000))
     host = os.environ.get('HOST', '0.0.0.0')
     
@@ -1131,4 +1131,4 @@ if __name__ == '__main__':
     print(f"  GET  /api/stats       - Compilation statistics")
     print("=" * 60)
     
-    app.run(debug=debug_mode, host=host, port=port)
+    app.run(host=host, port=port)
