@@ -546,6 +546,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 [🌟 Star this repo]([https://github.com/umairinayat/MiniLangPP-Compiler.git]) | [🐛 Report Bug](https://github.com/umairinayat/MiniLangPP-Compiler/issues) | [💡 Request Feature](https://github.com/umairinayat/MiniLangPP-Compiler/issues)
 
-**Made by [Your Name](https://github.com/umairinayat) • © 2024**
+**Made by [Umair Inayat](https://github.com/umairinayat) • © 2024**
 
 </div>
